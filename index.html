@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vishvapriya - Modern & Animated Portfolio</title>
+    <link rel="icon" href="docu_img.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Global Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* General section entry animation */
+        .section-animate {
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .section-animate.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- SKILLS SECTION: NEW SLIDE ANIMATIONS --- */
+        @keyframes slide-in-left {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slide-in-right {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .skill-card {
+            opacity: 0;
+            animation-fill-mode: forwards;
+            transition: transform 0.3s ease-out;
+        }
+
+        .skills-in-view .skill-card {
+            animation-duration: 0.7s;
+            animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .skills-in-view .skill-card:nth-child(odd) {
+            animation-name: slide-in-left;
+        }
+
+        .skills-in-view .skill-card:nth-child(even) {
+            animation-name: slide-in-right;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-8px) scale(1.05);
+        }
+
+        .skill-card:hover svg {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+
+        /* --- ACHIEVEMENTS SECTION: TIMELINE STYLES --- */
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #cbd5e1; /* slate-300 */
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            opacity: 0;
+            transition: all 0.8s ease-out;
+        }
+
+        .timeline-item.is-visible {
+            opacity: 1;
+        }
+
+        .timeline-item.left { transform: translateX(-100px); }
+        .timeline-item.left.is-visible { transform: translateX(0); }
+        .timeline-item.right { transform: translateX(100px); }
+        .timeline-item.right.is-visible { transform: translateX(0); }
+
+        .timeline-dot {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 20px;
+            height: 1.25rem;
+            width: 1.25rem;
+            border-radius: 9999px;
+            border-width: 4px;
+            border-color: #f1f5f9; /* slate-100 */
+            background-color: #6366f1; /* indigo-500 */
+            transform: translateX(-50%);
+        }
+
+        .timeline-item.left .timeline-content {
+            margin-left: -2rem;
+            padding-right: 3rem;
+            text-align: right;
+        }
+
+        .timeline-item.right .timeline-content {
+            margin-right: -2rem;
+            padding-left: 3rem;
+        }
+
+        /* --- OTHER ANIMATIONS --- */
+        @keyframes photoGlow {
+            0% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.6), 0 0 30px rgba(99, 102, 241, 0.4); }
+            100% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.2); }
+        }
+
+        .photo-glow {
+            animation: photoGlow 3s infinite ease-in-out;
+        }
+
+        .project-card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Typing cursor effect */
+        .typing-cursor::after {
+            content: '|';
+            display: inline-block;
+            vertical-align: bottom;
+            animation: blink-caret .75s step-end infinite;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: currentColor; }
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useEffect, useState, useRef, useCallback } = React;
+
+        // --- SVG ICONS (GENERAL & FOR SKILLS/ACHIEVEMENTS) ---
+        const ChevronDown = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="m6 9 6 6 6-6" /></svg>;
+        const Github = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.2c2.5 0 5-1.2 5-5.5A4.3 4.3 0 0 0 16 6.5c.5-1.7-.3-3.5-1.5-4.5 0 0-1 0-2 1.2a9.5 9.5 0 0 0-5 0c-1.2-1.2-2-1.2-2-1.2A4.3 4.3 0 0 0 3 6.5c0 4.3 2.5 5.5 5 5.5a4.8 4.8 0 0 0-1 3.2v4M12 2c3.3 0 6 2.7 6 6 0 2.2-1.3 4.1-3.2 5.1-.9.5-1.8.8-2.8.8-1.1 0-2.1-.3-3-.8C7.3 12.1 6 10.2 6 8c0-3.3 2.7-6 6-6zM9 18v-2M15 18v-2" /></svg>;
+        const Linkedin = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></svg>;
+        const Mail = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>;
+        const Phone = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-3.95-3.95A19.79 19.79 0 0 1 2 5.18 2 2 0 0 1 4.08 3h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>;
+        const Download = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>;
+        const ExternalLink = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>;
+        const X = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+        const Sparkles = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M9.9 10.9 2.7 18.1c-.6.6-.1 1.7 1.2 1.7h14.7c1.3 0 1.8-1.1 1.2-1.7L14.1 10.9m0 2.2 7.2 7.2c.6.6.1 1.7-1.2 1.7H6.2c-1.3 0-1.8-1.1-1.2-1.7L9.9 13.1m1.1-11.1 1.5 1.5L14 2l-1.5 1.5L11 2Zm7 5 1.5 1.5L21 7l-1.5 1.5L18 7Zm-15 0 1.5 1.5L6 7l-1.5 1.5L3 7Z" /></svg>;
+        const Award = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17.18 21l-5.15-3.62L6.82 21l1.713-8.11" /></svg>;
+        const CertificateIcon = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><circle cx="10" cy="16" r="2" /><path d="m16 10-4.5 4.5" /><path d="m14 14 2 2" /></svg>;
+        const CodeIcon = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>;
+        const TrophyIcon = ({ c }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={c}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V22h4v-7.34" /><path d="M12 15.5c-3.3 0-6-2.7-6-6v-1h12v1c0 3.3-2.7 6-6 6Z" /></svg>;
+        const TableauIcon = ({ c }) => (<svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><polyline points="3 17 9 11 13 15 21 7" /></svg>);
+        const PythonIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12.83 2.11C12.49 1.45 11.51 1.45 11.17 2.11L9.08 6.42C8.63 7.37 9.51 8.33 10.45 7.9L12 7.15V11H8.38C7.5 11 6.88 11.83 7.23 12.64L9.83 18.2C10.13 18.9 11.05 19.14 11.64 18.55L14.77 15.42C15.53 14.67 15.25 13.33 14.23 13H11.75V8.85L13.55 9.68C14.49 10.13 15.37 9.17 14.92 8.22L12.83 3.91V2.11M11.17 21.89C11.51 22.55 12.49 22.55 12.83 21.89L14.92 17.58C15.37 16.63 14.49 15.67 13.55 16.1L12 16.85V13H15.62C16.5 13 17.12 12.17 16.77 11.36L14.17 5.8C13.87 5.1 12.95 4.86 12.36 5.45L9.23 8.58C8.47 9.33 8.75 10.67 9.77 11H12.25V15.15L10.45 14.32C9.51 13.87 8.63 14.83 9.08 15.78L11.17 20.09V21.89Z" /></svg>;
+        const JsIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M17.2,19.2C18.2,18.5,18.7,17.5,18.7,16.2V7.8C18.7,6.5,18.2,5.5,17.2,4.8C16.2,4.1,15,3.8,13.7,3.8H9.3V16.2H13.7C15,16.2,16.2,15.9,17.2,15.2M13.7,5.4C14.6,5.4,15.3,5.6,15.8,6.1C16.3,6.6,16.5,7.3,16.5,8.1V14.1C16.5,14.9,16.3,15.6,15.8,16.1C15.3,16.6,14.6,16.8,13.7,16.8H11.5V5.4H13.7Z" /></svg>;
+        const JavaIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M2.35,14.05C2.7,15.05 3.1,15.6 3.45,16.05C4.25,17.2 5.25,17.65 6.6,17.65C7.5,17.65 8.1,17.35 8.6,16.8C9.1,16.2 9.2,15.5 9.2,14.65L9,12.85C8.95,11.55 8.9,10.7 8.85,10.25C8.75,9.6 8.5,9.1 8.1,8.75C7.7,8.4 7.2,8.2 6.5,8.2C5.6,8.2 5,8.5 4.5,9.05C4,9.6 3.8,10.25 3.8,11.1L4,12.85C4.1,14.25 4.15,15.2 4.2,15.65C4.25,16.2 4.5,16.7 4.85,17C5.2,17.3 5.7,17.45 6.35,17.45C7.2,17.45 7.9,17.15 8.4,16.6C8.9,16.05 9.15,15.3 9.15,14.35L9.35,12.5C9.4,11.2 9.45,10.3 9.5,9.85C9.6,9.15 9.9,8.6 10.3,8.2C10.75,7.75 11.35,7.5 12.15,7.5C13.2,7.5 14,7.85 14.5,8.5C15,9.1 15.2,9.9 15.2,10.9L15.05,12.3C15,13.6 14.95,14.5 14.9,15C14.8,15.7 14.6,16.25 14.2,16.65C13.8,17.05 13.25,17.25 12.45,17.25C11.5,17.25 10.85,17 10.35,16.4C9.85,15.8 9.65,15.1 9.65,14.2L9.8,12.4C9.85,11.1 9.9,10.15 9.95,9.6C10,9 10.2,8.5 10.5,8.2C10.8,7.9 11.3,7.7 11.95,7.7C12.8,7.7 13.4,8 13.8,8.55C14.2,9.1 14.4,9.8 14.4,10.7L14.55,12.2C14.6,13.55 14.65,14.45 14.7,14.9C14.75,15.6 15,16.1 15.4,16.5C15.8,16.85 16.35,17.05 17.1,17.05C18.25,17.05 19.1,16.6 19.65,15.75C20.25,14.85 20.45,13.6 20.45,11.95C20.45,10.3 20.15,9 19.5,8.05C18.8,7.05 17.9,6.5 16.7,6.4C17.85,6.1 18.7,5.55 19.3,4.7C19.85,3.8 20.1,2.8 20.1,1.7C20.1,0.65 19.8,0 19.2,0C18.8,0 18.5,0.1 18.3,0.3C18,0.5 17.85,0.75 17.8,1.05C17.5,0.45 17.05,0.1 16.5,0C15.8,0 15.2,0.3 14.7,0.85C14.2,1.4 14,2.1 14,2.9C14,3.75 14.25,4.45 14.75,5C15.3,5.5 16,5.7 16.8,5.75C17.65,5.75 18.25,6 18.6,6.45C18.9,6.9 19.1,7.5 19.1,8.2C19.1,9.05 18.9,9.75 18.5,10.3C18.1,10.9 17.5,11.2 16.7,11.2C15.7,11.2 15,10.7 14.5,9.75C14,8.8 13.8,7.55 13.8,6C13.8,4.35 14.1,3.1 14.7,2.25C15.3,1.35 16.2,0.85 17.4,0.85C18.25,0.85 18.8,1.1 19.1,1.55C19.45,2 19.6,2.55 19.6,3.2C19.6,3.95 19.4,4.55 19,5C18.6,5.4 18.05,5.65 17.3,5.65C16.4,5.65 15.75,5.4 15.3,4.9C14.8,4.4 14.6,3.75 14.6,2.95C14.6,2.15 14.8,1.55 15.2,1.15C15.65,0.7 16.2,0.5 16.9,0.5C17.35,0.5 17.7,0.6 17.9,0.8C18.15,1 18.25,1.2 18.3,1.45C18.9,1.45 19.3,1.9 19.3,2.8C19.3,3.8 19.05,4.6 18.5,5.1C18,5.65 17.3,5.9 16.35,5.95C15.25,6 14.45,6.35 13.9,7.05C13.4,7.7 13.1,8.65 13.1,9.85L12.95,11.65C12.9,12.95 12.85,13.8 12.8,14.25C12.7,14.9 12.5,15.4 12.1,15.75C11.75,16.1 11.25,16.25 10.65,16.25C9.75,16.25 9.1,15.95 8.65,15.4C8.2,14.8 8,14.1 8,13.15L8.2,11.45C8.25,10.1 8.3,9.15 8.35,8.65C8.4,8.1 8.6,7.6 8.9,7.25C9.2,6.9 9.7,6.7 10.35,6.7C11.3,6.7 11.95,7 12.35,7.6C12.75,8.2 12.95,9 12.95,10L13.1,11.8C13.15,13.1 13.2,14.05 13.25,14.55C13.35,15.2 13.55,15.75 13.95,16.1C14.3,16.45 14.85,16.65 15.55,16.65C16.4,16.65 17,16.35 17.4,15.8C17.8,15.2 18,14.45 18,13.45L18.2,11.65C18.25,10.3 18.3,9.35 18.35,8.85C18.4,8.2 18.6,7.7 18.9,7.35C19.25,6.95 19.75,6.75 20.45,6.75C21.4,6.75 22.05,7.1 22.45,7.75C22.85,8.4 23.05,9.4 23.05,10.65L22.9,12.45C22.8,13.8 22.75,14.75 22.7,15.25C22.6,15.9 22.4,16.45 22,16.85C21.6,17.25 21.05,17.45 20.25,17.45C19.1,17.45 18.2,17.9 17.5,18.75C16.85,19.65 16.5,20.8 16.5,22.25C16.5,23.35 16.8,24 17.4,24C17.8,24 18.1,23.9 18.3,23.7C18.5,23.5 18.65,23.25 18.7,22.95C19,23.55 19.45,23.85 20,24C20.7,24 21.3,23.7 21.8,23.15C22.3,22.6 22.5,21.9 22.5,21.05C22.5,20.2 22.25,19.45 21.75,18.9C21.2,18.3 20.5,18.05 19.65,18C18.75,18 18.1,18.25 17.7,18.7C17.3,19.15 17.1,19.7 17.1,20.4C17.1,21.2 17.3,21.8 17.7,22.2C18.1,22.6 18.65,22.85 19.4,22.85C20.25,22.85 20.9,22.55 21.3,22C21.7,21.4 21.9,20.6 21.9,19.6L21.7,17.8C21.65,16.45 21.6,15.55 21.55,15.1C21.5,14.4 21.25,13.9 20.85,13.5C20.45,13.15 19.9,12.95 19.15,12.95C18,12.95 17.15,13.4 16.6,14.25C16.05,15.15 15.85,16.4 15.85,18.05C15.85,19.75 16.15,21.05 16.8,22C17.5,22.95 18.4,23.45 19.6,23.45C20.45,23.45 21.05,23.2 21.4,22.65C21.75,22.15 21.9,21.5 21.9,20.7C21.9,19.95 21.7,19.35 21.3,18.9C20.9,18.5 20.35,18.25 19.6,18.25C18.85,18.25 18.25,18.5 17.85,18.95C17.4,19.4 17.2,20.05 17.2,20.85C17.2,21.6 17.4,22.15 17.8,22.55C18.2,22.9 18.7,23.1 19.3,23.1C18.7,23.1 18.3,22.65 18.3,21.7C18.3,20.7 18.5,19.9 19,19.35C19.5,18.75 20.2,18.45 21.15,18.45C22.3,18.45 23.1,18.9 23.6,19.8C24.1,20.65 24.3,21.8 24.3,23.2C24.3,24.35 24,25 23.4,25C23,25 22.7,24.9 22.5,24.7C22.3,24.5 22.15,24.25 22.1,23.95C21.8,24.55 21.35,24.85 20.8,25C20.1,25 19.5,24.7 19,24.15C18.5,23.6 18.3,22.9 18.3,22C18.3,21.2 18.55,20.45 19.05,19.9C19.5,19.3 20.15,19.05 21,19C21.85,19 22.5,19.25 22.9,19.75C23.3,20.2 23.5,20.8 23.5,21.5C23.5,22.3 23.3,22.9 22.9,23.3C22.5,23.7 21.95,23.9 21.2,23.9C20.3,23.9 19.6,23.65 19.1,23.1C18.6,22.5 18.4,21.75 18.4,20.8L18.6,19C18.7,17.65 18.75,16.7 18.8,16.2C18.85,15.55 19.05,15 19.45,14.65C19.85,14.25 20.4,14.05 21.1,14.05C21.95,14.05 22.55,14.35 22.95,14.9C23.4,15.45 23.6,16.2 23.6,17.1L2.35,14.05Z" /></svg>;
+        const TensorflowIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="m12 2.5l-8.5 4.5v9l8.5 4.5l8.5-4.5v-9l-8.5-4.5m0 2l6.5 3.5l-6.5 3.5l-6.5-3.5l6.5-3.5m-6.5 5.5l6.5 3.5v7l-6.5-3.5v-7m8.5 10.5v-7l6.5-3.5v7l-6.5 3.5Z" /></svg>;
+        const CppIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5,4A1.5,1.5 0 0,0 12,5.5A1.5,1.5 0 0,0 13.5,7A1.5,1.5 0 0,0 15,5.5A1.5,1.5 0 0,0 13.5,4M13.5,9A1.5,1.5 0 0,0 12,10.5A1.5,1.5 0 0,0 13.5,12A1.5,1.5 0 0,0 15,10.5A1.5,1.5 0 0,0 13.5,9M20,10.5A1.5,1.5 0 0,0 18.5,12A1.5,1.5 0 0,0 20,13.5A1.5,1.5 0 0,0 21.5,12A1.5,1.5 0 0,0 20,10.5M20,15.5A1.5,1.5 0 0,0 18.5,17A1.5,1.5 0 0,0 20,18.5A1.5,1.5 0 0,0 21.5,17A1.5,1.5 0 0,0 20,15.5M4.4,11C5.4,10.3 6.6,10 8,10C9.4,10 10.6,10.3 11.6,11L12.9,9.5C11.6,8.5 9.9,8 8,8C6.1,8 4.4,8.5 3.1,9.5L4.4,11M8,18C6.1,18 4.4,17.5 3.1,16.5L4.4,15C5.4,15.7 6.6,16 8,16C9.4,16 10.6,15.7 11.6,15L12.9,16.5C11.6,17.5 9.9,18 8,18Z" /></svg>;
+        const Html5Icon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M1.5,19.5L3,4.5H21L19.5,19.5L12,21.5L1.5,19.5M17.8,7.5H8.5L8.7,9.5H17.6L17.1,15.5L12,16.9L7,15.5L6.8,12.5H8.8L9,14.2L12,15.1L15,14.2L15.3,10.5H6.5L5.9,7.5H17.8Z" /></svg>;
+        const Css3Icon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M1.5,19.5L3,4.5H21L19.5,19.5L12,21.5L1.5,19.5M17.8,7.5H8.5L8.7,9.5H17.6L17.1,15.5L12,16.9L7,15.5L6.8,12.5H8.8L9,14.2L12,15.1L15,14.2L15.3,10.5H6.5L5.9,7.5H17.8Z" /></svg>;
+        const MachineLearningIcon = ({ c }) => <svg className={c} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10,0,0,1,22,12C22,15.79,19.95,19.05,17,20.82V22H15V20.1C14,20.37,13,20.5,12,20.5C11,20.5,10,20.37,9,20.1V22H7V20.82C4.05,19.05,2,15.79,2,12A10,10,0,0,1,12,2M12,4A8,8,0,0,0,4,12C4,14.38,5.16,16.47,6.88,17.77C8.18,17.92,9.5,18,10.75,18H13.25C14.5,18,15.82,17.92,17.12,17.77C18.84,16.47,20,14.38,20,12A8,8,0,0,0,12,4M12,6A6,6,0,0,1,18,12H16A4,4,0,0,0,12,8V6M6,12A6,6,0,0,1,12,6V8A4,4,0,0,0,8,12H6M12,18A6,6,0,0,1,6,12H8A4,4,0,0,0,12,16V18M18,12H16A4,4,0,0,0,12,16V18A6,6,0,0,1,18,12Z" /></svg>;
+
+
+        // --- Project Modal Component ---
+        const ProjectModal = ({ project, onClose }) => {
+            if (!project) return null;
+
+            return (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 modal-overlay"
+                    onClick={onClose}
+                >
+                    <div 
+                        className="bg-white rounded-2xl shadow-2xl w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto p-6 md:p-8 relative modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 transition-colors">
+                            <X c="w-8 h-8" />
+                        </button>
+                        
+                        <img src={project.imageUrl} alt={project.title} className="w-full h-64 object-cover rounded-lg mb-6" />
+                        
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2">{project.title}</h2>
+                        <p className="text-indigo-600 font-semibold text-md mb-4">{project.tools}</p>
+                        
+                        <p className="text-slate-600 text-lg leading-relaxed mb-6">{project.description}</p>
+                        
+                        <div className="flex flex-wrap gap-4">
+                            <a 
+                                href={project.github} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-slate-800 text-white font-semibold py-3 px-6 rounded-lg hover:bg-slate-900 transition-colors shadow-md"
+                            >
+                                <Github c="w-5 h-5" />
+                                View on GitHub
+                            </a>
+                            <a 
+                                href={project.demoUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors shadow-md"
+                            >
+                                <ExternalLink c="w-5 h-5" />
+                                Live Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App Component ---
+        const App = () => {
+            const sections = ['hero', 'about', 'skills', 'projects', 'achievements', 'contact'];
+            const sectionRefs = useRef({});
+            const skillsContainerRef = useRef(null);
+            const achievementRefs = useRef([]);
+            const [activeSection, setActiveSection] = useState('hero');
+            const [modalOpen, setModalOpen] = useState(false);
+            const [selectedProject, setSelectedProject] = useState(null);
+            const [typedName, setTypedName] = useState('');
+            const [typedTagline, setTypedTagline] = useState('');
+            const timeoutRef = useRef(null);
+
+            const fullName = 'Viishvapriya M';
+            const fullTagline = 'B.Tech – AI & DS | SDE/SDET Aspirant |Backend|Passionate about building reliable software.';
+
+            useEffect(() => {
+                let nameIndex = 0;
+                const typeName = () => {
+                    if (nameIndex < fullName.length) {
+                        setTypedName((prev) => prev + fullName.charAt(nameIndex));
+                        nameIndex++;
+                        timeoutRef.current = setTimeout(typeName, 120);
+                    } else {
+                        let taglineIndex = 0;
+                        const typeTagline = () => {
+                            if (taglineIndex < fullTagline.length) {
+                                setTypedTagline((prev) => prev + fullTagline.charAt(taglineIndex));
+                                taglineIndex++;
+                                timeoutRef.current = setTimeout(typeTagline, 70);
+                            }
+                        };
+                        typeTagline();
+                    }
+                };
+
+                timeoutRef.current = setTimeout(typeName, 500);
+                return () => clearTimeout(timeoutRef.current);
+            }, []);
+
+
+            // --- DATA ---
+            const projectsData = {
+                'ai-vs-human': { title: 'AI vs Human Text Classifier', tools: 'Machine Learning, Markov Chain', description: 'Developed a system to classify text as AI-generated or human-written, leveraging natural language processing techniques and statistical models based on Markov Chains to identify patterns indicative of AI authorship vs. human writing styles. This project involved extensive data preprocessing, model training, and evaluation for high accuracy.', github: 'https://github.com/Vishvapriya-24/', imageUrl: 'ai.webp', demoUrl: '#' },
+                'download-manager': { title: 'Download Manager', tools: 'Java, JavaFX, Swing', description: 'Engineered a robust desktop application to efficiently manage and control file downloads. Features include pausing, resuming, and organizing downloads, providing a user-friendly graphical interface built with JavaFX and Swing for intuitive interaction and management of multiple concurrent downloads, enhancing user productivity.', github: 'https://github.com/Vishvapriya-24/Download-Manager.git', imageUrl: 'download.webp', demoUrl: '#' },
+                'tourist-system': { title: 'Tourist Management System', tools: 'HTML, CSS, JavaScript, MySQL', description: 'Designed and developed a comprehensive web application to help tourists plan and manage their trips seamlessly. The system provides features like destination discovery, itinerary creation, and booking management, with a robust backend powered by MySQL for efficient data storage and retrieval, and a responsive frontend for optimal user experience.', github: 'https://github.com/Vishvapriya-24/Tourist-Mangement-Project-.git', imageUrl: 'tourist.jpg', demoUrl: '#' },
+            };
+
+            const skillsData = [
+                { name: 'JavaScript', icon: JsIcon, color: '#F7DF1E' },
+                { name: 'Python', icon: PythonIcon, color: '#3776AB' },
+                { name: 'Java', icon: JavaIcon, color: '#f89820' },
+                { name: 'TensorFlow', icon: TensorflowIcon, color: '#FF6F00' },
+                { name: 'Machine Learning', icon: MachineLearningIcon, color: '#4285F4' },
+                { name: 'Deep Learning', icon: Sparkles, color: '#9333ea' },
+                { name: 'C++', icon: CppIcon, color: '#00599C' },
+                { name: 'HTML5', icon: Html5Icon, color: '#E34F26' },
+                { name: 'CSS3', icon: Css3Icon, color: '#1572B6' },
+                { name: 'Git', icon: Github, color: '#F05032' },
+                { name: 'Tableau', icon: TableauIcon, color: '#004080' }
+            ];
+
+            const achievementsData = [
+                { title: 'Scholarship Award', desc: 'Awarded SPURS Scholarship for securing first place in school.', icon: TrophyIcon },
+                { title: 'Typewriting Distinction', desc: 'Distinction with First Class in Tamil and English Typewriting.', icon: Award },
+                { title: 'Smart India Hackathon', desc: 'Participated in the Smart India Hackathon, contributing to real-world problem-solving.', icon: CodeIcon },
+                { title: 'NPTEL Certification', desc: 'Successfully completed an NPTEL course in Ethical Hacking with certification.', icon: CertificateIcon },
+                { title: 'TensorFlow Lite Workshop', desc: 'Attended a hands-on workshop on deploying models on microcontrollers using TensorFlow Lite.', icon: TensorflowIcon },
+                { title: 'HackerRank Certifications', desc: 'Certification on Problem Solving, Golden Batch in Java.', icon: CertificateIcon },
+            ];
+
+            // --- ANIMATION OBSERVERS ---
+            useEffect(() => {
+                const observerCallback = (entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            if (entry.target.id) setActiveSection(entry.target.id);
+                            entry.target.classList.add('animate-in', 'skills-in-view', 'is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                };
+                const observer = new IntersectionObserver(observerCallback, { threshold: 0.15 });
+
+                Object.values(sectionRefs.current).forEach(ref => ref && observer.observe(ref));
+                if (skillsContainerRef.current) observer.observe(skillsContainerRef.current);
+                achievementRefs.current.forEach(ref => ref && observer.observe(ref));
+
+                return () => observer.disconnect();
+            }, []);
+
+            const scrollToSection = useCallback((sectionId) => {
+                sectionRefs.current[sectionId]?.scrollIntoView({ behavior: 'smooth' });
+            }, []);
+
+            const openModal = (project) => {
+                setSelectedProject(project);
+                setModalOpen(true);
+            };
+
+            const closeModal = () => {
+                setModalOpen(false);
+                setTimeout(() => setSelectedProject(null), 300); // Delay to allow for closing animation
+            };
+
+            // --- RENDER ---
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-800 font-inter relative overflow-x-hidden">
+                    <ProjectModal project={selectedProject} onClose={closeModal} />
+                    
+                    {/* Navigation */}
+                    <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-sm shadow-md py-4">
+                        <div className="container mx-auto flex justify-between items-center px-4">
+                            {/* LOGO ADDED HERE */}
+                            <img 
+  style={{
+    border: "2px solid white",
+    borderRadius: "60%"
+  }} 
+  src="v.jpg" 
+  alt="VP Style Logo" 
+  className="h-10" 
+/>
+
+                            <div className="hidden md:flex justify-center space-x-6">
+                                {sections.map(id => (
+                                    <button key={id} onClick={() => scrollToSection(id)} className={`text-base font-semibold capitalize transition-all duration-300 ${activeSection === id ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-500'}`}>{id === 'hero' ? 'Home' : id}</button>
+                                ))}
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Hero Section */}
+                    <section 
+                        id="hero" 
+                        ref={el => sectionRefs.current.hero = el} 
+                        className="min-h-screen flex items-center justify-center p-8 relative overflow-hidden bg-cover bg-center"
+                        // IMPORTANT: Replace this URL with your own background image
+                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop')" }}
+                    >
+                        {/* Background Overlay */}
+                        <div className="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row items-center text-center md:text-left gap-8">
+                            <img src="i.jpg" alt="Vishvapriya" className="w-48 h-48 md:w-60 md:h-60 object-cover rounded-full border-4 border-white shadow-2xl photo-glow" />
+                            <div>
+                                <h1 className="text-5xl md:text-7xl font-extrabold text-white h-24 typing-cursor">{typedName}</h1>
+                                <p className="text-xl md:text-2xl font-light text-indigo-200 mt-2 mb-6 h-16">{typedTagline || '\u00A0'}</p>
+                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-8">
+                                    {/* Resume Download Button */}
+                                    <a 
+                                        href="./Vishvapriya_Resume.pdf" // IMPORTANT: Place your resume file in the same folder and name it 'Vishvapriya_Resume.pdf' or update this path
+                                        download 
+                                        className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg"
+                                    >
+                                        <Download c="w-5 h-5\" />
+                                        Download CV
+                                    </a>
+                                    <div className="flex gap-4 text-white">
+                                        <a href="mailto:mvishvapriyamurugan@gmail.com" className="flex items-center gap-2 hover:text-indigo-300"><Mail c="w-6 h-6" /></a>
+                                        <a href="https://github.com/Vishvapriya-24" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-indigo-300"><Github c="w-6 h-6" /></a>
+                                        <a href="https://www.linkedin.com/in/vishvapriya-murugan-973a03315/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-indigo-300"><Linkedin c="w-6 h-6" /></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute bottom-8 animate-bounce"><ChevronDown c="w-10 h-10 text-white opacity-50" /></div>
+                    </section>
+
+                    {/* About Section */}
+                    <section id="about" ref={el => sectionRefs.current.about = el} className="py-24 px-4 bg-white section-animate">
+                        <div className="container mx-auto max-w-4xl text-center">
+                            <h2 className="text-4xl font-bold text-slate-900 mb-4">My Journey & Vision</h2>
+                            <p className="text-lg leading-relaxed text-slate-600">As a curious and impact-driven B.Tech student specializing in Artificial Intelligence and Data Science, I am constantly exploring the frontiers of technology to craft innovative solutions. My passion lies in transforming complex challenges into intuitive digital experiences. With a robust foundation in modern programming and a keen eye for data-driven insights, I thrive in dynamic environments where creativity meets code. I am committed to continuous learning and leveraging cutting-edge tools to build the future, one intelligent system at a time.</p>
+                        </div>
+                    </section>
+
+                    {/* Skills Section */}
+                    <section id="skills" ref={el => sectionRefs.current.skills = el} className="py-24 px-4 bg-slate-50">
+                        <div className="container mx-auto max-w-5xl text-center">
+                            <h2 className="text-4xl font-bold text-slate-900 mb-12">My Digital Toolkit</h2>
+                            <div ref={skillsContainerRef} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
+                                {skillsData.map((skill, index) => (
+                                    <div key={skill.name} className="skill-card p-4 bg-white rounded-xl shadow-lg flex flex-col items-center justify-center gap-3" style={{ animationDelay: `${index * 70}ms` }}>
+                                        <skill.icon c="w-12 h-12 transition-all duration-300" style={{ color: skill.color }} />
+                                        <p className="font-semibold text-sm text-slate-700">{skill.name}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Projects Section */}
+                    <section id="projects" ref={el => sectionRefs.current.projects = el} className="py-24 px-4 bg-white section-animate">
+                        <div className="container mx-auto max-w-6xl text-center">
+                            <h2 className="text-4xl font-bold text-slate-900 mb-12">Impactful Creations</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                                {Object.values(projectsData).map((project) => (
+                                    <div key={project.title} className="bg-slate-50 rounded-xl shadow-lg overflow-hidden border border-slate-100 transition-all duration-300 flex flex-col">
+                                        <img src={project.imageUrl} alt={project.title} className="w-full h-48 object-cover" />
+                                        <div className="p-6 flex flex-col flex-grow">
+                                            <h3 className="text-xl font-semibold text-slate-800">{project.title}</h3>
+                                            <p className="text-indigo-600 text-sm mt-1 mb-3">{project.tools}</p>
+                                            <p className="text-slate-600 text-base line-clamp-3 flex-grow">{project.description}</p>
+                                            <div className="mt-6 flex flex-wrap gap-4">
+                                                <button onClick={() => openModal(project)} className="flex-1 text-center bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+                                                    Learn More
+                                                </button>
+                                                <a 
+                                                    href={project.github} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="flex-1 text-center flex items-center justify-center gap-2 bg-slate-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-900 transition-colors"
+                                                >
+                                                    <Github c="w-5 h-5" />
+                                                    GitHub
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Achievements Section */}
+                    <section id="achievements" ref={el => sectionRefs.current.achievements = el} className="py-24 px-4 bg-slate-50" >
+                        <div className="container mx-auto max-w-4xl text-center">
+                            <h2 className="text-4xl font-bold text-slate-900 mb-16">Milestones & Recognitions</h2>
+                            <div className="relative timeline-container">
+                                {achievementsData.map((item, index) => (
+                                    <div key={index} ref={el => achievementRefs.current[index] = el} className={`timeline-item mb-12 flex w-full ${index % 2 === 0 ? 'flex-row-reverse left' : 'right'}`}>
+                                        <div className="w-1/2">
+                                            <div className="timeline-content">
+                                                <div className={`flex items-center gap-3 mb-2 ${index % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                                                    {index % 2 !== 0 && <item.icon c="w-7 h-7 text-indigo-500" />}
+                                                    <h3 className="text-xl font-bold text-slate-800">{item.title}</h3>
+                                                    {index % 2 === 0 && <item.icon c="w-7 h-7 text-indigo-500" />}
+                                                </div>
+                                                <p className="text-slate-600">{item.desc}</p>
+                                            </div>
+                                        </div>
+                                        <div className="timeline-dot"></div>
+                                        <div className="w-1/2"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Contact Section */}
+                    <section 
+                        id="contact" 
+                        ref={el => sectionRefs.current.contact = el} 
+                        className="py-24 px-4 text-white section-animate bg-cover bg-center"
+                        // IMPORTANT: Replace this URL with your own background image
+                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1488998427799-e3362cec87c3?q=80&w=2070&auto=format&fit=crop')" }}
+                    >
+                        {/* Background Overlay */}
+                        <div className="absolute inset-0 bg-gray-900 bg-opacity-70"></div>
+                        <div className="container mx-auto max-w-2xl text-center relative z-10">
+                            <h2 className="text-4xl font-bold mb-4">Let's Connect & Co-Create</h2>
+                            <p className="text-lg opacity-80 mb-8">I'm always open to new opportunities and collaborations. Feel free to reach out!</p>
+                            <div className="flex flex-col items-center gap-4 text-lg">
+                                <a href="mailto:mvishvapriyamurugan@gmail.com" className="flex items-center gap-3 hover:opacity-80 transition-opacity"><Mail c="w-6 h-6" /> mvishvapriyamurugan@gmail.com</a>
+                                <a href="tel:+917845698516" className="flex items-center gap-3 hover:opacity-80 transition-opacity"><Phone c="w-6 h-6" /> +91 7845698516</a>
+                                <div className="flex gap-6 mt-4">
+                                    <a href="https://www.linkedin.com/in/vishvapriya-murugan-973a03315/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Linkedin c="w-7 h-7" /></a>
+                                    <a href="https://github.com/Vishvapriya-24" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><Github c="w-7 h-7" /></a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
