@@ -18,12 +18,12 @@ Currently pursuing 3rd year**B.Tech in Artificial Intelligence and Data Science*
 
 ---
 ### 🛠️ Technical Arsenal
-* [cite_start]**Programming Languages:** Java, Python, JavaScript, C++[cite: 23, 62].
-* [cite_start]**AI & Machine Learning:** YOLOv8, EfficientNet, CRF, SVM, NLP[cite: 10, 16, 19].
-* [cite_start]**Frontend Development:** HTML5, CSS3, React.js[cite: 24, 63].
-* [cite_start]**Backend Frameworks:** Spring Boot, Express.js, Node.js[cite: 25, 64].
-* [cite_start]**Databases:** MySQL, MongoDB, PostgreSQL[cite: 26, 65].
-* [cite_start]**Developer Tools:** Git & GitHub, VS Code, Eclipse, IntelliJ IDEA, Postman[cite: 27, 66].
+* **Programming Languages:** Java, Python, JavaScript, C++.
+* **AI & Machine Learning:** YOLOv8, EfficientNet, CRF, SVM, NLP.
+* **Frontend Development:** HTML5, CSS3, React.js.
+* **Backend Frameworks:** Spring Boot, Express.js, Node.js.
+* **Databases:** MySQL, MongoDB, PostgreSQL.
+* **Developer Tools:** Git & GitHub, VS Code, Eclipse, IntelliJ IDEA, Postman.
 
 # 📌 Featured Projects
 
@@ -70,8 +70,8 @@ Currently pursuing 3rd year**B.Tech in Artificial Intelligence and Data Science*
 ---
 
 ### 📫 Let's Connect
-* [cite_start]**Email:** mvishvapriyamurugan@gmail.com [cite: 3] [cite_start]| vishva@gmail.com [cite: 38]
-* [cite_start]**Profiles:** Connect with me via LinkedIn, GitHub, LeetCode, or my Portfolio[cite: 3, 39, 40].
+* **Email:** mvishvapriyamuruga@gmail.com | vishva@gmail.com .
+* **Profiles:** Connect with me via LinkedIn, GitHub, LeetCode, or my Portfolio.
 
 
 # ✨ Fun Fact
